@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S — AI Assistant</title>
+    <meta name="description" content="Advanced Personal AI Voice Assistant Dashboard">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container"></div>
+
+    <div class="app-wrapper">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-ring">
+                        <div class="logo-core"><i class="fa-solid fa-bolt"></i></div>
+                    </div>
+                    <div class="logo-text">
+                        <h1>J.A.R.V.I.S</h1>
+                        <span class="version-badge">v5.0 Ultra</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="home" id="nav-home">
+                    <i class="fa-solid fa-house"></i><span>Home</span>
+                </button>
+                <button class="nav-btn" data-tab="chat" id="nav-chat">
+                    <i class="fa-solid fa-comments"></i><span>Chat</span>
+                    <div class="nav-badge" id="chat-badge" style="display:none;">0</div>
+                </button>
+                <button class="nav-btn" data-tab="system" id="nav-system">
+                    <i class="fa-solid fa-gauge-high"></i><span>System</span>
+                </button>
+                <button class="nav-btn" data-tab="history" id="nav-history">
+                    <i class="fa-solid fa-clock-rotate-left"></i><span>History</span>
+                </button>
+                <button class="nav-btn" data-tab="settings" id="nav-settings">
+                    <i class="fa-solid fa-gear"></i><span>Settings</span>
+                </button>
+            </nav>
+
+            <!-- Sidebar Footer — Status -->
+            <div class="sidebar-footer">
+                <div class="status-widget">
+                    <div class="status-dot-wrapper">
+                        <div class="status-dot" id="sidebar-status-dot"></div>
+                    </div>
+                    <div class="status-info">
+                        <span class="status-label" id="sidebar-status-text">Initializing...</span>
+                        <span class="status-sub" id="sidebar-clock">--:--</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-area">
+
+            <!-- ═══════════════ HOME TAB ═══════════════ -->
+            <section class="tab-content active" id="tab-home">
+                <!-- Top Stats Bar -->
+                <div class="top-stats-bar">
+                    <div class="stat-card glass-card">
+                        <i class="fa-solid fa-microphone"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-total-cmds">0</span>
+                            <span class="stat-label">Total Commands</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <i class="fa-solid fa-calendar-day"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-today-cmds">0</span>
+                            <span class="stat-label">Today</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <i class="fa-solid fa-battery-three-quarters"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-battery">--%</span>
+                            <span class="stat-label">Battery</span>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <i class="fa-solid fa-cloud-sun"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-weather">--°C</span>
+                            <span class="stat-label" id="stat-weather-desc">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-grid">
+                    <!-- Voice Visualizer Card -->
+                    <div class="home-card visualizer-card glass-card">
+                        <h3><i class="fa-solid fa-waveform"></i> Voice Engine</h3>
+                        <div class="visualizer-wrapper">
+                            <canvas id="visualizer-canvas" width="400" height="120"></canvas>
+                        </div>
+                        <div class="visualizer-status">
+                            <div class="pulse-dot-mini" id="vis-dot"></div>
+                            <span id="vis-status-text">Standby</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="home-card actions-card glass-card">
+                        <h3><i class="fa-solid fa-bolt"></i> Quick Actions</h3>
+                        <div class="quick-actions-grid">
+                            <button class="qa-btn" onclick="sendCmd('screenshot')" id="qa-screenshot">
+                                <i class="fa-solid fa-camera"></i><span>Screenshot</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('volume_mute')" id="qa-mute">
+                                <i class="fa-solid fa-volume-xmark"></i><span>Mute</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('volume_up')" id="qa-volup">
+                                <i class="fa-solid fa-volume-high"></i><span>Vol Up</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('volume_down')" id="qa-voldown">
+                                <i class="fa-solid fa-volume-low"></i><span>Vol Down</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('dark_mode_toggle')" id="qa-dark">
+                                <i class="fa-solid fa-moon"></i><span>Dark Mode</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('lock_screen')" id="qa-lock">
+                                <i class="fa-solid fa-lock"></i><span>Lock</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('battery')" id="qa-battery">
+                                <i class="fa-solid fa-battery-full"></i><span>Battery</span>
+                            </button>
+                            <button class="qa-btn" onclick="sendCmd('minimize_all')" id="qa-minimize">
+                                <i class="fa-solid fa-window-minimize"></i><span>Min All</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- App Launcher Card -->
+                    <div class="home-card launcher-card glass-card">
+                        <h3><i class="fa-solid fa-rocket"></i> App Launcher</h3>
+                        <div class="app-launcher-grid">
+                            <button class="app-btn" onclick="launchApp('WhatsApp')" id="app-whatsapp">
+                                <i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Spotify')" id="app-spotify">
+                                <i class="fa-brands fa-spotify"></i><span>Spotify</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Google Chrome')" id="app-chrome">
+                                <i class="fa-brands fa-chrome"></i><span>Chrome</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Safari')" id="app-safari">
+                                <i class="fa-brands fa-safari"></i><span>Safari</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Visual Studio Code')" id="app-vscode">
+                                <i class="fa-solid fa-code"></i><span>VS Code</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Notes')" id="app-notes">
+                                <i class="fa-solid fa-note-sticky"></i><span>Notes</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Finder')" id="app-finder">
+                                <i class="fa-solid fa-folder-open"></i><span>Finder</span>
+                            </button>
+                            <button class="app-btn" onclick="launchApp('Terminal')" id="app-terminal">
+                                <i class="fa-solid fa-terminal"></i><span>Terminal</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notes Widget -->
+                    <div class="home-card notes-card glass-card">
+                        <h3><i class="fa-solid fa-sticky-note"></i> Quick Notes</h3>
+                        <div class="notes-input-row">
+                            <input type="text" id="note-input" placeholder="Type a note..." />
+                            <button class="note-add-btn" onclick="addNote()" id="note-add-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div class="notes-list" id="notes-list">
+                            <p class="empty-state">No notes yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════ CHAT TAB ═══════════════ -->
+            <section class="tab-content" id="tab-chat">
+                <div class="chat-header glass-card">
+                    <div class="chat-header-left">
+                        <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div>
+                            <h3>Chat with Jarvis</h3>
+                            <span class="chat-subtitle" id="chat-status-sub">Online — Voice Active</span>
+                        </div>
+                    </div>
+                    <button class="icon-btn" onclick="clearChat()" id="clear-chat-btn" title="Clear Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg system">
+                        <div class="msg-bubble">Welcome! Say "Jarvis" or "Hey Jarvis" to start talking.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════ SYSTEM TAB ═══════════════ -->
+            <section class="tab-content" id="tab-system">
+                <h2 class="tab-title"><i class="fa-solid fa-gauge-high"></i> System Monitor</h2>
+                <div class="system-grid">
+                    <div class="sys-card glass-card">
+                        <div class="sys-card-header">
+                            <i class="fa-solid fa-microchip"></i>
+                            <h4>CPU</h4>
+                        </div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="ring-fill ring-cpu" cx="60" cy="60" r="52" id="ring-cpu"></circle>
+                            </svg>
+                            <span class="ring-value" id="cpu-value">0%</span>
+                        </div>
+                        <p class="sys-detail" id="cpu-detail">Loading...</p>
+                    </div>
+
+                    <div class="sys-card glass-card">
+                        <div class="sys-card-header">
+                            <i class="fa-solid fa-memory"></i>
+                            <h4>RAM</h4>
+                        </div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="ring-fill ring-ram" cx="60" cy="60" r="52" id="ring-ram"></circle>
+                            </svg>
+                            <span class="ring-value" id="ram-value">0%</span>
+                        </div>
+                        <p class="sys-detail" id="ram-detail">Loading...</p>
+                    </div>
+
+                    <div class="sys-card glass-card">
+                        <div class="sys-card-header">
+                            <i class="fa-solid fa-battery-three-quarters"></i>
+                            <h4>Battery</h4>
+                        </div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="ring-fill ring-battery" cx="60" cy="60" r="52" id="ring-battery"></circle>
+                            </svg>
+                            <span class="ring-value" id="battery-value">0%</span>
+                        </div>
+                        <p class="sys-detail" id="battery-detail">Loading...</p>
+                    </div>
+
+                    <div class="sys-card glass-card">
+                        <div class="sys-card-header">
+                            <i class="fa-solid fa-hard-drive"></i>
+                            <h4>Disk</h4>
+                        </div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="ring-fill ring-disk" cx="60" cy="60" r="52" id="ring-disk"></circle>
+                            </svg>
+                            <span class="ring-value" id="disk-value">0%</span>
+                        </div>
+                        <p class="sys-detail" id="disk-detail">Loading...</p>
+                    </div>
+                </div>
+
+                <div class="sys-info-row">
+                    <div class="sys-info-card glass-card">
+                        <h4><i class="fa-solid fa-network-wired"></i> Network</h4>
+                        <p id="network-info">Loading...</p>
+                    </div>
+                    <div class="sys-info-card glass-card">
+                        <h4><i class="fa-solid fa-clock"></i> Uptime</h4>
+                        <p id="uptime-info">Loading...</p>
+                    </div>
+                    <div class="sys-info-card glass-card">
+                        <h4><i class="fa-solid fa-window-restore"></i> Active Apps</h4>
+                        <p id="active-apps-info">Loading...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════ HISTORY TAB ═══════════════ -->
+            <section class="tab-content" id="tab-history">
+                <div class="history-header">
+                    <h2 class="tab-title"><i class="fa-solid fa-clock-rotate-left"></i> Command History</h2>
+                    <div class="history-search">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="history-search-input" placeholder="Search commands..." />
+                    </div>
+                </div>
+                <div class="history-list" id="history-list">
+                    <p class="empty-state">No commands yet. Start talking to Jarvis!</p>
+                </div>
+            </section>
+
+            <!-- ═══════════════ SETTINGS TAB ═══════════════ -->
+            <section class="tab-content" id="tab-settings">
+                <h2 class="tab-title"><i class="fa-solid fa-gear"></i> Settings</h2>
+                <div class="settings-grid">
+                    <div class="settings-card glass-card">
+                        <h4><i class="fa-solid fa-volume-high"></i> Voice</h4>
+                        <div class="setting-row">
+                            <label>TTS Voice</label>
+                            <select id="setting-voice">
+                                <option value="hi-IN-MadhurNeural">Madhur (Hindi Male)</option>
+                                <option value="hi-IN-SwaraNeural">Swara (Hindi Female)</option>
+                                <option value="en-IN-PrabhatNeural">Prabhat (English Male)</option>
+                                <option value="en-IN-NeerjaNeural">Neerja (English Female)</option>
+                                <option value="en-US-GuyNeural">Guy (US English Male)</option>
+                                <option value="en-US-JennyNeural">Jenny (US English Female)</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <label>Speech Language</label>
+                            <select id="setting-language">
+                                <option value="hi-IN">Hindi</option>
+                                <option value="en-IN">English (India)</option>
+                                <option value="en-US">English (US)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-card glass-card">
+                        <h4><i class="fa-solid fa-palette"></i> Appearance</h4>
+                        <div class="setting-row">
+                            <label>Accent Color</label>
+                            <div class="color-options">
+                                <button class="color-dot active" style="background:#3b82f6;" onclick="setAccent('#3b82f6', this)" id="color-blue"></button>
+                                <button class="color-dot" style="background:#8b5cf6;" onclick="setAccent('#8b5cf6', this)" id="color-purple"></button>
+                                <button class="color-dot" style="background:#10b981;" onclick="setAccent('#10b981', this)" id="color-green"></button>
+                                <button class="color-dot" style="background:#f59e0b;" onclick="setAccent('#f59e0b', this)" id="color-amber"></button>
+                                <button class="color-dot" style="background:#ef4444;" onclick="setAccent('#ef4444', this)" id="color-red"></button>
+                                <button class="color-dot" style="background:#06b6d4;" onclick="setAccent('#06b6d4', this)" id="color-cyan"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card glass-card">
+                        <h4><i class="fa-solid fa-robot"></i> Assistant</h4>
+                        <div class="setting-row">
+                            <label>Owner Name</label>
+                            <input type="text" id="setting-owner" value="{{ owner }}" />
+                        </div>
+                        <div class="setting-row">
+                            <label>Wake Word Sensitivity</label>
+                            <input type="range" id="setting-sensitivity" min="100" max="600" value="300" />
+                        </div>
+                    </div>
+
+                    <div class="settings-card glass-card">
+                        <h4><i class="fa-solid fa-info-circle"></i> About</h4>
+                        <div class="about-info">
+                            <p><strong>J.A.R.V.I.S</strong> — Just A Rather Very Intelligent System</p>
+                            <p>Version: 5.0 Ultra Edition</p>
+                            <p>Owner: <span id="about-owner">{{ owner }}</span></p>
+                            <p>AI: Llama 3.3 70B via Groq</p>
+                            <p>TTS: Microsoft Edge Neural</p>
+                            <p class="credits">Made with ❤️ by {{ owner }}</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="save-settings-btn" onclick="saveSettings()" id="save-settings-btn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                </button>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
