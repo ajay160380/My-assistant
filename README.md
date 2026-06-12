@@ -1,7 +1,7 @@
 # 🤖 J.A.R.V.I.S — Personal AI Voice Assistant
 
 **Just A Rather Very Intelligent System** — An advanced AI voice assistant for macOS, inspired by Iron Man's JARVIS.
-
+---
 ## ✨ Features
 
 - 🗣️ **Wake Word Detection** — Say "Jarvis" or "Hi Jarvis" to activate
